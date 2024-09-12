@@ -212,12 +212,14 @@ internal class ColorSamplerWindow: NSWindow {
             return
         }
         
-        if event.scrollingDeltaY < -1 {
+        let deltaY = delegate.config.zoomWheelInverse ? -event.scrollingDeltaY : event.scrollingDeltaY
+        
+        if deltaY < -1 {
             guard let nextZoom = zoom?.getNextZoom(available: delegate.config.zoomValues) else {
                 return
             }
             zoom = nextZoom
-        } else if event.scrollingDeltaY > 1 {
+        } else if deltaY > 1 {
             guard let previousZoom = zoom?.getPreviousZoom(available: delegate.config.zoomValues) else {
                 return
             }

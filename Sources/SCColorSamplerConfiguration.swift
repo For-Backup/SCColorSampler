@@ -21,6 +21,7 @@ open class SCColorSamplerConfiguration: NSObject {
     private var _defaultZoom: ZoomValue = .m
     private var _loupeShape: LoupeShape = .roundedRect
     private var _showColorDescription: Bool = true
+    private var _zoomWheelInverse: Bool = false
     private var _colorDescriptionMethod: (NSColor) -> String = { color in
         let red = Int((color.redComponent * 255).rounded())
         let green = Int((color.greenComponent * 255).rounded())
@@ -237,6 +238,17 @@ open class SCColorSamplerConfiguration: NSObject {
             }
             return previousZoom
         }
+    }
+    
+    // MARK: - ZOOM
+    /// SCColorSamplerConfiguration property that specifies if the mouse wheel should be inverted when zooming. It has nothing to do with `event.isDirectionInvertedFromDevice`. It just provides a way to invert the mouse wheel without forcing users to change their system config.
+    ///
+    /// - Possible values are:
+    ///     * false (default)
+    ///     * true
+    open var zoomWheelInverse: Bool {
+        get { _zoomWheelInverse }
+        set { _zoomWheelInverse = newValue }
     }
     
     /// SCColorSamplerConfiguration property that specifies the possible zoom values. Set to empty array to disable zoom functionality. Set the `defaultZoomValue` property to set the starting zoom value.

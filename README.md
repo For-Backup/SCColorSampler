@@ -181,6 +181,12 @@ configuration.zoomValues = [.xxl, .s, .l, .xs]
 SCColorSampler.sample(configuration: configuration) { ... }
 ```
 
+#### Zoom with Mouse Wheel Inverted
+```swift
+// For example:
+configuration.zoomWheelInverse = true
+```
+
 #### Show Color Description
 <p float="left">
 <img alt="Image showing showColorDescription off option" src="./readme_assets/off.png" width="100" height="125">
