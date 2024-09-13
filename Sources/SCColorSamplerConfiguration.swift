@@ -34,6 +34,8 @@ open class SCColorSamplerConfiguration: NSObject {
             return String(format: "%02x%02x%02x%02x", red, green, blue, alpha).uppercased()
         }
     }
+    private var _loupeFollowMode: LoupeFollowMode = .center
+    private var _loupeFollowDistance: Double = 10
     
     // MARK: - Loupe shape
     public enum LoupeShape {
@@ -57,6 +59,26 @@ open class SCColorSamplerConfiguration: NSObject {
         }
     }
     
+    // MARK: - Loupe follow
+    public enum LoupeFollowMode {
+        case center
+        case noBlock
+    }
+    
+    /// SCColorSamplerConfiguration property that specifies the distance from the loupe to the mouse.
+    ///
+    open var loupeFollowMode: LoupeFollowMode { get { _loupeFollowMode } set { _loupeFollowMode = newValue } }
+    
+    /// SCColorSamplerConfiguration property that specifies the color sampler loupe shape.
+    ///
+    /// It should be set to the approximate mouse size.
+    open var loupeFollowDistance: Double { get { _loupeFollowDistance } set { _loupeFollowDistance = newValue } }
+    
+    /// SCColorSamplerConfiguration property that specifies the invisible padding, used to initialize an invisible window to listen on mouse event
+    ///
+    /// It should be a little greater than `loupeFollowDistance`
+    var padding: Double { get { _loupeFollowDistance + 5 } }
+    
     /// SCColorSamplerConfiguration property that specifies the color sampler loupe shape.
     ///
     /// - Possible values are:
@@ -71,6 +93,7 @@ open class SCColorSamplerConfiguration: NSObject {
         case medium
         case large
         case custom(CGFloat)
+        case recOnly(CGFloat, CGFloat)
         
         internal func getSize() -> CGSize {
             switch self {
@@ -82,6 +105,8 @@ open class SCColorSamplerConfiguration: NSObject {
                 return .init(width: 160, height: 160)
             case .custom(let value):
                 return .init(width: value, height: value)
+            case .recOnly(let width, let height):
+                return .init(width: width, height: height)
             }
         }
     }

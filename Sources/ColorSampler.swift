@@ -40,6 +40,11 @@ internal class ColorSampler: NSObject {
             return
         }
         
+        // Make window a little bigger than use specified
+        let loupeSize = configuration.loupeSize.getSize()
+        let samplerWindowWidth = loupeSize.width + configuration.padding * 2
+        let samplerWindowHeight = loupeSize.height + configuration.padding * 2
+        
         var windowInit: (
             contentRect: NSRect,
             styleMask: NSWindow.StyleMask,
@@ -47,7 +52,7 @@ internal class ColorSampler: NSObject {
             defer: Bool
         ) {
             return (
-                NSRect.init(origin: .zero, size: configuration.loupeSize.getSize()),
+                NSRect.init(origin: .zero, size: CGSize(width: samplerWindowWidth, height: samplerWindowHeight)),
                 NSWindow.StyleMask.borderless,
                 NSWindow.BackingStoreType.buffered,
                 true
@@ -83,7 +88,9 @@ internal class ColorSampler: NSObject {
         // prepare image for window's contentView in advance
         self.colorSamplerWindow?.mouseMoved(with: NSEvent())
         
-        NSCursor.hide()
+        if self.configuration?.loupeFollowMode == .center {
+            NSCursor.hide()
+        }
     }
     
     func reset() {

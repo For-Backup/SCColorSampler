@@ -17,19 +17,23 @@ internal class ColorSamplerView: NSView {
     var quality: SCColorSamplerConfiguration.Quality!
     var shape: SCColorSamplerConfiguration.LoupeShape!
     
+    var padding: Double!
+    
     init(
         frame frameRect: NSRect,
         zoom: Binding<SCColorSamplerConfiguration.ZoomValue?>,
         image: Binding<CGImage?>,
         loupeColor: Binding<NSColor>,
         shape: SCColorSamplerConfiguration.LoupeShape,
-        quality: SCColorSamplerConfiguration.Quality
+        quality: SCColorSamplerConfiguration.Quality,
+        padding: Double
     ) {
         self.zoom = zoom
         self.image = image
         self.quality = quality
         self.loupeColor = loupeColor
         self.shape = shape
+        self.padding = padding
         super.init(
             frame: frameRect
         )
@@ -54,11 +58,18 @@ internal class ColorSamplerView: NSView {
         
         let rect = self.bounds
         
-        let width: CGFloat = rect.width
-        let height: CGFloat = rect.height
+        // Invisible window for debug
+        // context.setLineWidth(4.0)
+        // context.setStrokeColor(CGColor(red: 0, green: 0, blue: 255, alpha: 1))
+        // context.addPath(shape.path(in: rect))
+        // context.strokePath()
         
+        // User specified region
+        let paddedRectOrigin = CGPoint(x: rect.origin.x + padding, y: rect.origin.y + padding)
+        let paddedRect = CGRect(origin: paddedRectOrigin, size: CGSize(width: rect.size.width - padding * 2, height: rect.size.height - padding * 2))
+               
         // mask
-        let path = shape.path(in: rect)
+        let path = shape.path(in: paddedRect)
         context.addPath(path)
         context.clip()
         
@@ -68,6 +79,9 @@ internal class ColorSamplerView: NSView {
         }
         
         // draw image
+        let width: CGFloat = rect.width
+        let height: CGFloat = rect.height
+        
         context.setRenderingIntent(.relativeColorimetric)
         context.interpolationQuality = .none
         context.draw(image, in: rect)
@@ -85,15 +99,15 @@ internal class ColorSamplerView: NSView {
         let squareSize = zoom.getSquarePatternSize()
         let squareDisplacement = zoom.getSquarePatternDisplacement()
         square.borderWidth = 0.5
-        square.borderColor = .black.copy(alpha: 0.15)
+        square.borderColor = .black.copy(alpha: 0.05)
         square.frame = CGRect(x: x - (squareSize * 25),
                               y: y - (squareSize * 25),
                               width: squareSize,
                               height: squareSize)
         
-        let instanceCount = 50
-        
-        replicatorLayer.instanceCount = instanceCount
+        let instanceCount: Double = 50
+
+        replicatorLayer.instanceCount = Int(instanceCount)
         replicatorLayer.instanceTransform = CATransform3DMakeTranslation(squareSize, squareDisplacement, 0)
         
         replicatorLayer.addSublayer(square)
@@ -102,7 +116,7 @@ internal class ColorSamplerView: NSView {
         
         outerReplicatorLayer.addSublayer(replicatorLayer)
         
-        outerReplicatorLayer.instanceCount = instanceCount
+        outerReplicatorLayer.instanceCount = Int(instanceCount)
         outerReplicatorLayer.instanceTransform = CATransform3DMakeTranslation(squareDisplacement, squareSize, 0)
         
         outerReplicatorLayer.render(in: context)
@@ -111,6 +125,7 @@ internal class ColorSamplerView: NSView {
         let apertureRect = CGRect(x: x, y: y, width: apertureSize, height: apertureSize)
         context.setLineWidth(zoom.getApertureLineWidth())
         context.setStrokeColor(loupeColor.wrappedValue.cgColor)
+        //context.setStrokeColor(CGColor(red: 255, green: 0, blue: 0, alpha: 1))
         context.setShouldAntialias(false)
         context.stroke(apertureRect.insetBy(dx: zoom.getInsetAmount(), dy: zoom.getInsetAmount()))
         
@@ -118,6 +133,7 @@ internal class ColorSamplerView: NSView {
         context.setShouldAntialias(true)
         context.setLineWidth(4.0)
         context.setStrokeColor(loupeColor.wrappedValue.cgColor)
+        //context.setStrokeColor(CGColor(red: 0, green: 255, blue: 0, alpha: 1))
         context.addPath(path)
         context.strokePath()
     }

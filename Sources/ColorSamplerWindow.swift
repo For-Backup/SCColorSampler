@@ -133,6 +133,18 @@ internal class ColorSamplerWindow: NSWindow {
         }
     }
     
+    private func getWindowOriginPoint(_ position: NSPoint) -> NSPoint {
+        let config = unwrappedDelegate.config
+        switch config.loupeFollowMode {
+        case .center:
+            return .init(x: position.x - (self.frame.size.width / 2), y: position.y - (self.frame.size.height / 2))
+        case .noBlock:
+            return .init(
+                x: position.x - config.padding + config.loupeFollowDistance,
+                y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance
+            )
+        }
+    }
     // Override NSWindow methods
     override open func mouseMoved(with event: NSEvent) {
         let position = NSEvent.mouseLocation
@@ -148,10 +160,7 @@ internal class ColorSamplerWindow: NSWindow {
             self.activeDisplay = screenWithMouse
         }
                         
-        let origin: NSPoint = .init(
-            x: position.x - (self.frame.size.width / 2),
-            y: position.y - (self.frame.size.height / 2)
-        )
+        let origin: NSPoint = getWindowOriginPoint(position)
         self.setFrameOrigin(origin)
         
         if let image = croppedImageBinding.wrappedValue,
@@ -272,7 +281,8 @@ extension ColorSamplerWindow {
                         image: croppedImageBinding,
                         loupeColor: loupeColorBinding,
                         shape: delegate.config.loupeShape,
-                        quality: delegate.config.quality
+                        quality: delegate.config.quality,
+                        padding: delegate.config.loupeFollowMode == .noBlock ? delegate.config.padding : 0
                     )
                     self.contentView = contentView
                     if unwrappedDelegate.config.showColorDescription {
