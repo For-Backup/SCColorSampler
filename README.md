@@ -187,6 +187,18 @@ SCColorSampler.sample(configuration: configuration) { ... }
 configuration.zoomWheelInverse = true
 ```
 
+#### Change Loupe Location to avoid sight blocking
+```swift
+// For example:
+configuration.loupeShape = .rect
+configuration.loupeFollowDistance = 10
+configuration.loupeSize = .recOnly(256, 64)
+
+//configuration.loupeShape = .circle
+//configuration.loupeFollowDistance = 1
+//configuration.loupeSize = .large
+```
+
 #### Show Color Description
 <p float="left">
 <img alt="Image showing showColorDescription off option" src="./readme_assets/off.png" width="100" height="125">
