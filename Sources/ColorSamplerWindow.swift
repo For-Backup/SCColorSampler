@@ -133,22 +133,51 @@ internal class ColorSamplerWindow: NSWindow {
         }
     }
     
-    private func getWindowOriginPoint(_ position: NSPoint) -> NSPoint {
+    // Get origin point(zero point) of the rectangle area(loupe)
+    private func getWindowOriginPoint(_ position: NSPoint, _ display: NSScreen) -> NSPoint {
+        let displayOrigin = display.frame.origin
+        // should minus display origin point for multiple displays
+        let position = NSPoint(x: position.x - displayOrigin.x, y: position.y - displayOrigin.y)
         let config = unwrappedDelegate.config
+        let safeAreaDistance: CGFloat = 100
+        
+        
         switch config.loupeFollowMode {
         case .center:
             return .init(x: position.x - (self.frame.size.width / 2), y: position.y - (self.frame.size.height / 2))
         case .noBlock:
+            // Need dodge when mouse reach edge of screen, especially bottom and right edge
+            var origin: NSPoint
+            if position.x + self.frame.size.width >= display.frame.width - safeAreaDistance {
+                // right
+                origin = .init(
+                    x: position.x - self.frame.size.width + config.padding,
+                    y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance
+                )
+            } else if position.y - self.frame.size.height <= safeAreaDistance {
+                // bottom
+                origin = .init(
+                    x: position.x - config.padding,
+                    y: position.y - config.padding
+                )
+            } else {
+                // top and left
+                origin = .init(
+                    x: position.x - config.padding + config.loupeFollowDistance,
+                    y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance
+                )
+            }
+            // should add origin back cause we want an absolute value caculated base on (0,0)
             return .init(
-                x: position.x - config.padding + config.loupeFollowDistance,
-                y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance
+                x: origin.x + displayOrigin.x,
+                y: origin.y + displayOrigin.y
             )
         }
     }
     // Override NSWindow methods
     override open func mouseMoved(with event: NSEvent) {
         let position = NSEvent.mouseLocation
-        
+        print(position)
         guard let screenWithMouse = NSScreen.screens.first(
             where: { NSMouseInRect(position, $0.frame, false) }
         )
@@ -159,8 +188,8 @@ internal class ColorSamplerWindow: NSWindow {
         if self.activeDisplay != screenWithMouse {
             self.activeDisplay = screenWithMouse
         }
-                        
-        let origin: NSPoint = getWindowOriginPoint(position)
+        
+        let origin: NSPoint = getWindowOriginPoint(position, screenWithMouse)
         self.setFrameOrigin(origin)
         
         if let image = croppedImageBinding.wrappedValue,
