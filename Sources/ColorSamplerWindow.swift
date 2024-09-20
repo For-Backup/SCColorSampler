@@ -177,7 +177,6 @@ internal class ColorSamplerWindow: NSWindow {
     // Override NSWindow methods
     override open func mouseMoved(with event: NSEvent) {
         let position = NSEvent.mouseLocation
-        print(position)
         guard let screenWithMouse = NSScreen.screens.first(
             where: { NSMouseInRect(position, $0.frame, false) }
         )
