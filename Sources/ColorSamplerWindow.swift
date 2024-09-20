@@ -404,14 +404,17 @@ internal extension ColorSamplerWindow {
         
         if captureSize.truncatingRemainder(dividingBy: 2) != 0 { captureSize += 1 }
         
+        let loupeSize = delegate.config.loupeSize.getSize()
+        let captureSizeY = captureSize * loupeSize.height / loupeSize.width
+        
         let x = (position.x - display.frame.origin.x) * delegate.config.quality.getMultiplier()
         let y = (display.frame.height - (position.y - display.frame.origin.y)) * delegate.config.quality.getMultiplier()
         
         let captureRect = NSRect(
             x: x - (captureSize / 2),
-            y: y - (captureSize / 2),
+            y: y - (captureSizeY / 2),
             width: captureSize,
-            height: captureSize
+            height: captureSizeY
         )
                         
         guard let croppedImage = image.cropping(to: captureRect) else {
