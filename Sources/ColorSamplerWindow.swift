@@ -66,6 +66,7 @@ internal class ColorSamplerWindow: NSWindow {
         self.level = .screenSaver
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.ignoresMouseEvents = false
+        self.acceptsMouseMovedEvents = true
         // Start stream
         Task {
             await startStream()
@@ -175,6 +176,7 @@ internal class ColorSamplerWindow: NSWindow {
         }
     }
     // Override NSWindow methods
+    // 这个方法需要采样窗口一直是key，但是这样其它窗口就会失去焦点，颜色会变，因此不能再用了
     override open func mouseMoved(with event: NSEvent) {
         let position = NSEvent.mouseLocation
         guard let screenWithMouse = NSScreen.screens.first(
@@ -211,7 +213,16 @@ internal class ColorSamplerWindow: NSWindow {
         super.mouseMoved(with: event)
     }
     
-    override open func mouseDown(with event: NSEvent) {
+//    override open func mouseDown(with event: NSEvent) {
+//        if let color = self.croppedImageBinding.wrappedValue?.colorAtCenter(),
+//           let delegate = self.delegate as? ColorSamplerDelegate {
+//            delegate.callSelectionHandler(color: color)
+//        }
+//        self.orderOut(self)
+//    }
+//    
+    func finalizeColor() {
+        print("finalize color down")
         if let color = self.croppedImageBinding.wrappedValue?.colorAtCenter(),
            let delegate = self.delegate as? ColorSamplerDelegate {
             delegate.callSelectionHandler(color: color)
@@ -267,14 +278,22 @@ internal class ColorSamplerWindow: NSWindow {
         super.scrollWheel(with: event)
     }
     
-    override func keyDown(with event: NSEvent) {
-        if event.keyCode == kVK_Escape {
-            if let delegate = self.delegate as? ColorSamplerDelegate {
-                delegate.callSelectionHandler(color: nil)
-            }
-            self.orderOut(self)
+    func cancel() {
+        if let delegate = self.delegate as? ColorSamplerDelegate {
+            delegate.callSelectionHandler(color: nil)
         }
+        self.orderOut(self)
     }
+    
+    // 取消置顶后，这里的keydonw就不能用了
+//    override func keyDown(with event: NSEvent) {
+//        if event.keyCode == kVK_Escape {
+//            if let delegate = self.delegate as? ColorSamplerDelegate {
+//                delegate.callSelectionHandler(color: nil)
+//            }
+//            self.orderOut(self)
+//        }
+//    }
 }
 
 extension ColorSamplerWindow {

@@ -10,6 +10,7 @@ import Combine
 import Foundation
 import ScreenCaptureKit
 import struct SwiftUI.Binding
+import Carbon.HIToolbox
 
 internal class ColorSampler: NSObject {
     // Properties
@@ -20,6 +21,8 @@ internal class ColorSampler: NSObject {
     
     var onMouseMovedHandlerBlock: ((NSColor) -> Void)?
     var selectionHandlerBlock: ((NSColor?) -> Void)?
+    var monitors: [Any?] = []
+    var isRunning: Bool = false;
     
     // Functions
     func sample(
@@ -80,14 +83,15 @@ internal class ColorSampler: NSObject {
             name: NSWindow.didResignKeyNotification,
             object: self.colorSamplerWindow
         )
-        
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        self.colorSamplerWindow?.makeKeyAndOrderFront(self)
+        addMouseMonitor()
+        // 这里有问题，激活放大镜后，其它程序都变灰色了，取色就不对了
+//        NSApplication.shared.activate(ignoringOtherApps: false)
+        self.colorSamplerWindow?.orderFront(self) // 不能变成 key
         self.colorSamplerWindow?.orderedIndex = 0
-        
         // prepare image for window's contentView in advance
         self.colorSamplerWindow?.mouseMoved(with: NSEvent())
         
+        self.isRunning = true
         if self.configuration?.loupeFollowMode == .center {
             NSCursor.hide()
         }
@@ -105,5 +109,87 @@ internal class ColorSampler: NSObject {
         self.colorSamplerWindow = nil
         self.onMouseMovedHandlerBlock = nil
         self.selectionHandlerBlock = nil
+    }
+    
+    func colorSelected() {
+        self.isRunning = false
+        self.colorSamplerWindow?.finalizeColor()
+        self.removeMonitors()
+    }
+    
+    func cancel() {
+        self.isRunning = false
+        self.colorSamplerWindow?.cancel()
+        self.removeMonitors()
+    }
+    
+    func addMouseMonitor() {
+        
+        // 鼠标移动过快导致窗口跟不上，需要全局事件监听来辅助
+        let global_mouseMoved = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { e in
+            self.colorSamplerWindow?.mouseMoved(with: e)
+        }
+        monitors.append(global_mouseMoved)
+        
+        // 该事件只监听除了自身以外的程序，用于在鼠标按下捕获颜色
+        let global_mouse_down = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { e in
+            guard self.isRunning else {
+                return
+            }
+            self.colorSelected()
+        }
+        monitors.append(global_mouse_down)
+        
+        // 用于在按下ESC关闭取色窗口，回车取色
+        let global_key = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { e in
+            guard self.isRunning else {
+                return
+            }
+            if e.keyCode == kVK_Escape {
+                self.cancel()
+            }
+            if e.keyCode == kVK_Return {
+                self.colorSelected()
+            }
+        }
+        monitors.append(global_key)
+         // 鼠标左键取色
+        let local_mouse = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { e in
+            guard self.isRunning else {
+                return e
+            }
+            self.colorSelected()
+            return e
+        }
+        monitors.append(local_mouse)
+        
+        // 用于在按下ESC关闭取色窗口，回车取色
+        let local_key = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { e in
+            guard self.isRunning else {
+                return e
+            }
+            if e.keyCode == kVK_Escape {
+                self.cancel()
+            }
+            if e.keyCode == kVK_Return {
+                self.colorSelected()
+            }
+            return e
+        }
+        monitors.append(local_key)
+    }
+    
+    func removeMonitors() {
+        print("removing monitors")
+        for i in 0 ..< self.monitors.count {
+            if let m = self.monitors[i] {
+                do {
+                    NSEvent.removeMonitor(m)
+                } catch {
+                }
+            }
+        }
+        // 防止出现 Thread 1: EXC_BAD_ACCESS (code=EXC_I386_GPFLT)
+        self.monitors = []
     }
 }
