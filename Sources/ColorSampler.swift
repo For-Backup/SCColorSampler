@@ -84,8 +84,8 @@ internal class ColorSampler: NSObject {
             object: self.colorSamplerWindow
         )
         addMouseMonitor()
-        // 这里有问题，激活放大镜后，其它程序都变灰色了，取色就不对了
-//        NSApplication.shared.activate(ignoringOtherApps: false)
+        // 这里有问题，激活放大镜后，其它程序都变灰色了，取色就不对了（已修复）
+        // NSApplication.shared.activate(ignoringOtherApps: false)
         self.colorSamplerWindow?.orderFront(self) // 不能变成 key
         self.colorSamplerWindow?.orderedIndex = 0
         // prepare image for window's contentView in advance
@@ -127,11 +127,13 @@ internal class ColorSampler: NSObject {
     
     func addMouseMonitor() {
         
-        // 鼠标移动过快导致窗口跟不上，需要全局事件监听来辅助
-        let global_mouseMoved = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { e in
+        // 假如鼠标移动过快导致窗口跟不上，需要此函数来找回监听
+        // 目前已经将隐形窗口放大（SCColorSamplerConfiguration.padding），这种情况应该很少出现了，如果出现，就需要这里发挥作用
+        let local_mouseExited = NSEvent.addLocalMonitorForEvents(matching: .mouseExited) { e in
             self.colorSamplerWindow?.mouseMoved(with: e)
+            return e
         }
-        monitors.append(global_mouseMoved)
+        monitors.append(local_mouseExited)
         
         // 该事件只监听除了自身以外的程序，用于在鼠标按下捕获颜色
         let global_mouse_down = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { e in
@@ -182,7 +184,6 @@ internal class ColorSampler: NSObject {
     }
     
     func removeMonitors() {
-        print("removing monitors")
         for i in 0 ..< self.monitors.count {
             if let m = self.monitors[i] {
                 do {

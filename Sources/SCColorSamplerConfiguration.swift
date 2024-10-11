@@ -77,7 +77,7 @@ open class SCColorSamplerConfiguration: NSObject {
     /// SCColorSamplerConfiguration property that specifies the invisible padding, used to initialize an invisible window to listen on mouse event
     ///
     /// It should be a little greater than `loupeFollowDistance`
-    var padding: Double { get { _loupeFollowDistance + 5 } }
+    var padding: Double { get { _loupeFollowDistance + 300 } }
     
     /// SCColorSamplerConfiguration property that specifies the color sampler loupe shape.
     ///

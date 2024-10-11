@@ -62,7 +62,7 @@ internal class ColorSamplerWindow: NSWindow {
         // NSWindow properties
         self.delegate = delegate
         self.isOpaque = false
-        self.backgroundColor = .clear
+        self.backgroundColor = .init(red: 1, green: 1, blue: 1, alpha: 0.001) // 让隐形窗口不可见，但是不能透传点击事件到底部
         self.level = .screenSaver
         self.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.ignoresMouseEvents = false
@@ -119,7 +119,7 @@ internal class ColorSamplerWindow: NSWindow {
                 contentRect: .init(
                     origin: .init(
                         x: self.frame.midX - 50,
-                        y: self.frame.minY - 35
+                        y: self.frame.minY - 35 + delegate.config.padding // 实时颜色的位置根据用户可见区域计算
                     ),
                     size: .init(
                         width: 100,
@@ -134,6 +134,13 @@ internal class ColorSamplerWindow: NSWindow {
         }
     }
     
+    /// This function get user view frame from calculated window frame.
+    ///
+    /// Be cautious this function should only be used after window frame is set by `getWindowOriginPoint`
+    private func getUserViewSize() -> CGSize {
+        return unwrappedDelegate.config.loupeSize.getSize()
+    }
+    
     // Get origin point(zero point) of the rectangle area(loupe)
     private func getWindowOriginPoint(_ position: NSPoint, _ display: NSScreen) -> NSPoint {
         let displayOrigin = display.frame.origin
@@ -143,20 +150,20 @@ internal class ColorSamplerWindow: NSWindow {
         let safeAreaDistance: CGFloat = 100
         
         var origin: NSPoint = .zero
-        
+        // 在隐形窗口之内的用户可见区域
+        let size: CGSize = getUserViewSize()
+        // Need dodge when mouse reach edge of screen, especially bottom and right edge
         switch config.loupeFollowMode {
         case .center:
-            origin = .init(x: position.x - (self.frame.size.width / 2), y: position.y - (self.frame.size.height / 2))
+            origin = .init(x: position.x - self.frame.size.width / 2, y: position.y - (self.frame.size.height / 2))
         case .noBlock:
-            // Need dodge when mouse reach edge of screen, especially bottom and right edge
-            var origin: NSPoint
-            if position.x + self.frame.size.width >= display.frame.width - safeAreaDistance {
+            if position.x + size.width >= display.frame.width - safeAreaDistance { // 使用用户可见区域判断
                 // right
                 origin = .init(
                     x: position.x - self.frame.size.width + config.padding,
-                    y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance
+                    y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance // 但是使用窗口大小计算，因为计算的不是可见区域的原点，而是外部窗口的原点
                 )
-            } else if position.y - self.frame.size.height <= safeAreaDistance {
+            } else if position.y - size.height <= safeAreaDistance {
                 // bottom
                 origin = .init(
                     x: position.x - config.padding,
@@ -170,6 +177,7 @@ internal class ColorSamplerWindow: NSWindow {
                 )
             }
         }
+        
         // should add origin back cause we want an absolute value caculated base on (0,0)
         return .init(
             x: origin.x + displayOrigin.x,
@@ -223,7 +231,7 @@ internal class ColorSamplerWindow: NSWindow {
 //    }
 //    
     func finalizeColor() {
-        print("finalize color down")
+//        print("finalize color down")
         if let color = self.croppedImageBinding.wrappedValue?.colorAtCenter(),
            let delegate = self.delegate as? ColorSamplerDelegate {
             delegate.callSelectionHandler(color: color)
@@ -328,9 +336,7 @@ extension ColorSamplerWindow {
                         zoom: zoomBinding,
                         image: croppedImageBinding,
                         loupeColor: loupeColorBinding,
-                        shape: delegate.config.loupeShape,
-                        quality: delegate.config.quality,
-                        padding: delegate.config.loupeFollowMode == .noBlock ? delegate.config.padding : 0
+                        config: delegate.config
                     )
                     self.contentView = contentView
                     if unwrappedDelegate.config.showColorDescription {
@@ -342,7 +348,7 @@ extension ColorSamplerWindow {
                             NSRect.init(
                                 origin: .init(
                                     x: self.frame.midX - newWidth / 2,
-                                    y: self.frame.minY - 35
+                                    y: self.frame.minY - 35 + delegate.config.padding
                                 ),
                                 size: .init(
                                     width: newWidth,
@@ -446,7 +452,7 @@ internal extension ColorSamplerWindow {
                     
         var captureSize: CGFloat = round(
             round(
-                self.frame.size.width / self.zoom!.getPixelZoom(quality: delegate.config.quality)
+                delegate.config.loupeSize.getSize().width / self.zoom!.getPixelZoom(quality: delegate.config.quality)
             ) * delegate.config.quality.getMultiplier()
         )
         
