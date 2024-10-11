@@ -142,10 +142,11 @@ internal class ColorSamplerWindow: NSWindow {
         let config = unwrappedDelegate.config
         let safeAreaDistance: CGFloat = 100
         
+        var origin: NSPoint = .zero
         
         switch config.loupeFollowMode {
         case .center:
-            return .init(x: position.x - (self.frame.size.width / 2), y: position.y - (self.frame.size.height / 2))
+            origin = .init(x: position.x - (self.frame.size.width / 2), y: position.y - (self.frame.size.height / 2))
         case .noBlock:
             // Need dodge when mouse reach edge of screen, especially bottom and right edge
             var origin: NSPoint
@@ -168,12 +169,12 @@ internal class ColorSamplerWindow: NSWindow {
                     y: position.y - self.frame.size.height + config.padding - config.loupeFollowDistance
                 )
             }
-            // should add origin back cause we want an absolute value caculated base on (0,0)
-            return .init(
-                x: origin.x + displayOrigin.x,
-                y: origin.y + displayOrigin.y
-            )
         }
+        // should add origin back cause we want an absolute value caculated base on (0,0)
+        return .init(
+            x: origin.x + displayOrigin.x,
+            y: origin.y + displayOrigin.y
+        )
     }
     // Override NSWindow methods
     // 这个方法需要采样窗口一直是key，但是这样其它窗口就会失去焦点，颜色会变，因此不能再用了

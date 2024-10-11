@@ -115,12 +115,14 @@ internal class ColorSampler: NSObject {
         self.isRunning = false
         self.colorSamplerWindow?.finalizeColor()
         self.removeMonitors()
+        self.reset()
     }
     
     func cancel() {
         self.isRunning = false
         self.colorSamplerWindow?.cancel()
         self.removeMonitors()
+        self.reset()
     }
     
     func addMouseMonitor() {
