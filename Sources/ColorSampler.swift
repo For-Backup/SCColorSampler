@@ -127,7 +127,7 @@ internal class ColorSampler: NSObject {
     
     func addMouseMonitor() {
         
-        // 假如鼠标移动过快导致窗口跟不上，需要此函数来找回监听
+        // 假如鼠标移动过快导致窗口跟不上，需要此函数来找回监听。和键盘相关的全局事件需要辅助功能权限
         // 目前已经将隐形窗口放大（SCColorSamplerConfiguration.padding），这种情况应该很少出现了，如果出现，就需要这里发挥作用
         let local_mouseExited = NSEvent.addLocalMonitorForEvents(matching: .mouseExited) { e in
             self.colorSamplerWindow?.mouseMoved(with: e)
@@ -135,7 +135,7 @@ internal class ColorSampler: NSObject {
         }
         monitors.append(local_mouseExited)
         
-        // 该事件只监听除了自身以外的程序，用于在鼠标按下捕获颜色
+        // 该事件只监听除了自身以外的程序，用于在鼠标按下捕获颜色，和键盘相关的全局事件需要辅助功能权限
         let global_mouse_down = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { e in
             guard self.isRunning else {
                 return
@@ -144,7 +144,7 @@ internal class ColorSampler: NSObject {
         }
         monitors.append(global_mouse_down)
         
-        // 用于在按下ESC关闭取色窗口，回车取色
+        // 用于在按下ESC关闭取色窗口，回车取色，和键盘相关的全局事件需要辅助功能权限
         let global_key = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { e in
             guard self.isRunning else {
                 return
