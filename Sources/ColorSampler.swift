@@ -129,6 +129,11 @@ internal class ColorSampler: NSObject {
         
         // 假如鼠标移动过快导致窗口跟不上，需要此函数来找回监听。和键盘相关的全局事件需要辅助功能权限
         // 目前已经将隐形窗口放大（SCColorSamplerConfiguration.padding），这种情况应该很少出现了，如果出现，就需要这里发挥作用
+        let global_mouseMoved = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { e in
+            self.colorSamplerWindow?.mouseMoved(with: e)
+        }
+        monitors.append(global_mouseMoved)
+        
         let local_mouseExited = NSEvent.addLocalMonitorForEvents(matching: .mouseExited) { e in
             self.colorSamplerWindow?.mouseMoved(with: e)
             return e
