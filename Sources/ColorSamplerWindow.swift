@@ -147,7 +147,7 @@ internal class ColorSamplerWindow: NSWindow {
         // should minus display origin point for multiple displays
         let position = NSPoint(x: position.x - displayOrigin.x, y: position.y - displayOrigin.y)
         let config = unwrappedDelegate.config
-        let safeAreaDistance: CGFloat = 100
+        let safeAreaDistance: CGFloat = 10
         
         var origin: NSPoint = .zero
         // 在隐形窗口之内的用户可见区域
@@ -157,7 +157,13 @@ internal class ColorSamplerWindow: NSWindow {
         case .center:
             origin = .init(x: position.x - self.frame.size.width / 2, y: position.y - (self.frame.size.height / 2))
         case .noBlock:
-            if position.x + size.width >= display.frame.width - safeAreaDistance { // 使用用户可见区域判断
+            if position.x + size.width >= display.frame.width - safeAreaDistance && position.y - size.height <= safeAreaDistance {
+                // right and bottom
+                origin = .init(
+                    x: position.x - self.frame.size.width + config.padding,
+                    y: position.y - config.padding
+                )
+            } else if position.x + size.width >= display.frame.width - safeAreaDistance { // 使用用户可见区域判断
                 // right
                 origin = .init(
                     x: position.x - self.frame.size.width + config.padding,
